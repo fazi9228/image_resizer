@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Resizer Tool</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="upload-section">
+                <div class="upload-box" id="uploadBox">
+                    <div style="font-size: 2em; margin-bottom: 10px;">📁</div>
+                    <div style="margin-bottom: 10px; font-size: 0.9em;">Drop image here</div>
+                    <button style="background: #4facfe; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" onclick="document.getElementById('fileInput').click()">
+                        Choose File
+                    </button>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                </div>
+            </div>
+            
+            <div class="section" id="imageInfoSection" style="display: none;">
+                <h3>📊 Image Info</h3>
+                <div class="info-panel">
+                    <div class="info-row">
+                        <span>Original:</span>
+                        <span id="originalSize">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span>Current:</span>
+                        <span id="currentSize">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span>Scale:</span>
+                        <span id="scaleInfo">100%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section" id="resizeSection" style="display: none;">
+                <h3>📏 Resize Settings</h3>
+                
+                <div class="input-group">
+                    <label for="targetWidth">Width (px)</label>
+                    <input type="number" id="targetWidth" min="1" max="5000">
+                </div>
+                
+                <div class="input-group">
+                    <label for="targetHeight">Height (px)</label>
+                    <input type="number" id="targetHeight" min="1" max="5000">
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" id="maintainAspect" checked>
+                    <label for="maintainAspect">Lock aspect ratio</label>
+                </div>
+                
+                <div class="input-group">
+                    <label for="outputFormat">Output Format</label>
+                    <select id="outputFormat">
+                        <option value="JPEG">JPEG</option>
+                        <option value="PNG">PNG</option>
+                        <option value="WEBP">WebP</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="section" id="presetsSection" style="display: none;">
+                <h3>🎨 Quick Presets</h3>
+                
+                <div class="presets-grid">
+                    <button class="preset-btn" onclick="applyPreset('instagram_post', event)">
+                        <div>Instagram</div>
+                        <small>1:1</small>
+                    </button>
+                    <button class="preset-btn" onclick="applyPreset('instagram_story', event)">
+                        <div>Story</div>
+                        <small>9:16</small>
+                    </button>
+                    <button class="preset-btn" onclick="applyPreset('youtube_thumbnail', event)">
+                        <div>YouTube</div>
+                        <small>16:9</small>
+                    </button>
+                    <button class="preset-btn" onclick="applyPreset('facebook_post', event)">
+                        <div>Facebook</div>
+                        <small>1.91:1</small>
+                    </button>
+                    <button class="preset-btn" onclick="applyPreset('linkedin_banner', event)">
+                        <div>LinkedIn</div>
+                        <small>4:1</small>
+                    </button>
+                    <button class="preset-btn" onclick="applyPreset('twitter_post', event)">
+                        <div>Twitter</div>
+                        <small>16:9</small>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="section" id="overlaySection" style="display: none;">
+                <h3>🎨 Logo & Text</h3>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="font-weight: 600; margin-bottom: 8px; display: block;">Logo</label>
+                    <input type="file" id="logoInput" accept="image/*" style="font-size: 0.8em; padding: 6px; margin-bottom: 8px;">
+                    
+                    <div id="logoControls" style="display: none;">
+                        <div class="input-group">
+                            <label for="logoSize">Size</label>
+                            <input type="range" id="logoSize" min="5" max="50" value="15" style="width: 100%;">
+                            <small style="color: #999;">Current: <span id="logoSizeValue">15%</span></small>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="logoPosition">Position</label>
+                            <select id="logoPosition" style="width: 100%; padding: 6px; font-size: 0.9em;">
+                                <option value="top-left">Top Left</option>
+                                <option value="top-right" selected>Top Right</option>
+                                <option value="bottom-left">Bottom Left</option>
+                                <option value="bottom-right">Bottom Right</option>
+                                <option value="center">Center</option>
+                            </select>
+                        </div>
+                        
+                        <button onclick="removeLogo()" style="background: #ff6b6b; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 0.8em; cursor: pointer;">
+                            Remove Logo
+                        </button>
+                    </div>
+                </div>
+                
+                <div>
+                    <label style="font-weight: 600; margin-bottom: 8px; display: block;">Text Overlay</label>
+                    <div class="input-group">
+                        <textarea id="overlayText" placeholder="Enter text... (use Enter for new lines)" rows="3" style="width: 100%; padding: 8px; resize: vertical; font-family: inherit;"></textarea>
+                    </div>
+                    
+                    <div id="textControls">
+                        <div class="input-group">
+                            <label for="textSize">Font Size</label>
+                            <input type="range" id="textSize" min="12" max="120" value="36" style="width: 100%;">
+                            <small style="color: #999;">Current: <span id="textSizeValue">36px</span></small>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="fontFamily">Font Family</label>
+                            <select id="fontFamily" style="width: 100%; padding: 6px; font-size: 0.9em;">
+                                <option value="Arial">Arial</option>
+                                <option value="Helvetica">Helvetica</option>
+                                <option value="Times New Roman">Times New Roman</option>
+                                <option value="Georgia">Georgia</option>
+                                <option value="Verdana">Verdana</option>
+                                <option value="Impact">Impact</option>
+                                <option value="Comic Sans MS">Comic Sans MS</option>
+                                <option value="Courier New">Courier New</option>
+                            </select>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label>Font Style</label>
+                            <div style="display: flex; gap: 5px; margin-bottom: 8px;">
+                                <button type="button" id="fontBold" onclick="toggleFontStyle('bold')" style="padding: 4px 8px; border: 1px solid #555; background: #444; color: white; border-radius: 3px; font-weight: bold;">B</button>
+                                <button type="button" id="fontItalic" onclick="toggleFontStyle('italic')" style="padding: 4px 8px; border: 1px solid #555; background: #444; color: white; border-radius: 3px; font-style: italic;">I</button>
+                                <button type="button" id="fontUnderline" onclick="toggleFontStyle('underline')" style="padding: 4px 8px; border: 1px solid #555; background: #444; color: white; border-radius: 3px; text-decoration: underline;">U</button>
+                            </div>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="textColor">Color</label>
+                            <input type="color" id="textColor" value="#ffffff" style="width: 100%; height: 35px;">
+                        </div>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="textShadow" checked>
+                            <label for="textShadow">Add shadow</label>
+                        </div>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="textDraggable">
+                            <label for="textDraggable">Enable drag & resize</label>
+                        </div>
+                        
+                        <div id="textPositionControls">
+                            <div class="input-group">
+                                <label for="textPosition">Position</label>
+                                <select id="textPosition" style="width: 100%; padding: 6px; font-size: 0.9em;">
+                                    <option value="top-left">Top Left</option>
+                                    <option value="top-center">Top Center</option>
+                                    <option value="top-right">Top Right</option>
+                                    <option value="center-left">Center Left</option>
+                                    <option value="center">Center</option>
+                                    <option value="center-right">Center Right</option>
+                                    <option value="bottom-left">Bottom Left</option>
+                                    <option value="bottom-center" selected>Bottom Center</option>
+                                    <option value="bottom-right">Bottom Right</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section" id="actionsSection" style="display: none;">
+                <button class="btn btn-primary" onclick="applyResize()" id="applyBtn">
+                    🔄 Apply Resize
+                </button>
+                <button class="btn btn-success" onclick="downloadImage()" id="downloadBtn" disabled>
+                    💾 Download
+                </button>
+            </div>
+        </div>
+        
+        <div class="main-editor">
+            <div class="toolbar">
+                <div class="zoom-controls">
+                    <button class="zoom-btn" onclick="zoomIn()">+</button>
+                    <span class="zoom-level" id="zoomLevel">100%</span>
+                    <button class="zoom-btn" onclick="zoomOut()">-</button>
+                    <button class="zoom-btn" onclick="fitToScreen()">Fit</button>
+                </div>
+                
+                <button class="grid-toggle" id="gridToggle" onclick="toggleGrid()">
+                    Grid
+                </button>
+                
+                <div style="margin-left: auto; color: #ccc; font-size: 0.9em;">
+                    Drag corners to resize • Drag image to move
+                </div>
+            </div>
+            
+            <div class="canvas-container" id="canvasContainer">
+                <div class="canvas-wrapper" id="canvasWrapper" style="display: none;">
+                    <canvas class="grid-canvas" id="gridCanvas"></canvas>
+                    <canvas class="image-canvas" id="imageCanvas"></canvas>
+                    <canvas class="overlay-canvas" id="overlayCanvas"></canvas>
+                    <div class="text-handles" id="textHandles" style="display: none; position: absolute; z-index: 6;">
+                        <div class="text-drag-handle" id="textDragHandle" style="position: absolute; width: 100%; height: 100%; cursor: move; background: rgba(100,200,255,0.2); border: 2px dashed rgba(100,200,255,0.8); box-sizing: border-box;"></div>
+                        <div class="text-resize-handle" id="textResizeHandle" style="position: absolute; bottom: -8px; right: -8px; width: 16px; height: 16px; background: #4facfe; border: 2px solid white; cursor: se-resize; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
+                    </div>
+                    <div class="resize-handles" id="resizeHandles">
+                        <div class="resize-handle nw" data-handle="nw"></div>
+                        <div class="resize-handle ne" data-handle="ne"></div>
+                        <div class="resize-handle sw" data-handle="sw"></div>
+                        <div class="resize-handle se" data-handle="se"></div>
+                        <div class="resize-handle n" data-handle="n"></div>
+                        <div class="resize-handle s" data-handle="s"></div>
+                        <div class="resize-handle w" data-handle="w"></div>
+                        <div class="resize-handle e" data-handle="e"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
